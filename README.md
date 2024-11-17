@@ -37,7 +37,7 @@ Before deploying this bot, make sure you have the following:
   1. Run the flask app (make sure ngrok is also running), in the project directory using:
      python app.py
   3. If not already connected to the Twilio sandbox, connect using instructions in Step 2, then type anything to begin a conversation with the bot. Follow its prompting until it has recorded all the information.
-  4. On your device running the flask app navigate to your negrok generated link + "/view_data" or localhost:5000/viewdata.
+  4. On your device running the flask app navigate to your negrok generated link + "/view_data" or localhost:5000/view_data.
   5. Log in using your specified password in Step 1 to view your collected data.
   6. Then click on the export option of your choosing and log out when finished.
   
