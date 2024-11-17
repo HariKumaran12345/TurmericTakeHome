@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Data</title>
+    <style>
+        .logout-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .logout-btn {
+            padding: 6px 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #c82333;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .export-btn {
+            padding: 6px 12px;
+            margin: 2px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+        }
+
+        .export-btn:hover {
+            background-color: #0056b3;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 8px;
+        }
+
+        .close {
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: red;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        #export-buttons {
+            text-align: right;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="logout-container">
+        <form action="{{ url_for('logout') }}" method="get">
+            <button class="logout-btn" type="submit">Logout</button>
+        </form>
+    </div>
+    <div class="container">
+        <h1>Patient Data</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Phone Number</th>
+                    <th>Name</th>
+                    <th>Date of Birth</th>
+                    <th>Gender</th>
+                    <th>Address</th>
+                    <th>Medical History</th>
+                    <th>Current Medications</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for phone, data in patient_data.items() %}
+                    <tr>
+                        <td>{{ phone }}</td>
+                        <td>{{ data['name'] }}</td>
+                        <td>{{ data['dob'] }}</td>
+                        <td>{{ data['gender'] }}</td>
+                        <td>{{ data['address'] }}</td>
+                        <td>{{ data['medical_history'] }}</td>
+                        <td>{{ data['current_medications'] }}</td>
+                        <td>
+                            <button class="export-btn" onclick="showExportModal('{{ phone }}', 'csv')">CSV</button>
+                            <button class="export-btn" onclick="showExportModal('{{ phone }}', 'excel')">Excel</button>
+                            <button class="export-btn" onclick="showExportModal('{{ phone }}', 'sheets')">Sheets</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Export Modal -->   
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Export Data</h2>
+            <form id="exportForm" method="POST">
+                <div id="sheetsCredentials" style="display: none;" class="form-group">
+                    <label for="credentials">Google Sheets Credentials:</label>
+                    <textarea id="credentials" name="credentials" rows="4" style="width: 100%;"></textarea>
+                </div>
+                <button type="submit" class="export-btn">Export</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentExportType = '';
+        let currentPatientId = '';
+
+        function showExportModal(patientId, exportType) {
+            currentExportType = exportType;
+            currentPatientId = patientId;
+            
+            // Configure the form based on export type
+            const form = document.getElementById('exportForm');
+            const sheetsCredentials = document.getElementById('sheetsCredentials');
+            
+            // Set the appropriate form action
+           /* if (patientId === 'all') {
+                form.action = `/export_${exportType}`;
+            } else {
+                form.action = `/export_${exportType}/${patientId}`;
+            }*/
+            form.action = `/export_${exportType}/${patientId}`;
+            
+            // Show/hide Google Sheets credentials field
+            sheetsCredentials.style.display = exportType === 'sheets' ? 'block' : 'none';
+            
+            // Show the modal
+            document.getElementById('exportModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('exportModal').style.display = 'none';
+            document.getElementById('exportForm').reset();
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('exportModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('exportForm').onsubmit = function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw new Error(err.error) });
+                }
+                if (currentExportType === 'sheets') {
+                    return response.json();
+                }
+                return response.blob();
+            })
+            .then(data => {
+                if (currentExportType === 'sheets') {
+                    alert(data.message);
+                } else {
+                    // For CSV and Excel, trigger download
+                    const url = window.URL.createObjectURL(data);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `patient_data_${currentPatientId}_${new Date().toISOString().slice(0,10)}.${currentExportType}`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+                }
+                closeModal();
+            })
+            .catch(error => {
+                alert('Export failed: ' + error.message);
+            });
+        };
+    </script>
+</body>
+</html>
